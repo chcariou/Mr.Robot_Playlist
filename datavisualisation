@@ -1,0 +1,239 @@
+# MR. ROBOT PLAYLIST
+# Christophe Cariou, January 31, 2016
+# Work in progress
+# See result here : 
+
+
+# Libraries and functions
+
+	library(raster)
+	library(EBImage)
+	library(scales)
+	library(extrafont)
+	source("/Users/ChCariou/Desktop/R/text.background.R")
+	#https://github.com/chcariou/R.functions.on.text/blob/master/text.background.R
+	source("/Users/ChCariou/Desktop/R/text.columns.R")
+	#https://github.com/chcariou/R.functions.on.text/blob/master/text.columns.R
+
+
+
+# PART ONE - THE FRONT AND BACK COVER
+
+
+# Image MR.ROBOT
+
+	url <- "/Users/ChCariou/Desktop/R_MrRobot/Image/f---society_propre.jpg"
+		# USA Network: http://www.usanetwork.com/mrrobot/photos/fk-society
+		# You can find it here: http://lab.chcariou.fr/data/mr.robot/f---society_propre.jpg
+
+	cover <- brick(url)
+
+	# Image <- From rectangle to square: 1300x1300 pixels
+	
+		cover@ncols/cover@nrows # initial ratio
+		cover.extent <- extent(0,cover@ncols,1,cover@nrows)
+		cover.crop <- crop(cover,cover.extent)
+		m.rows <- cover.crop@nrows/2
+		m.cols <-  cover.crop@ncols/2
+
+		cover.extent <- extent(m.cols-m.rows,m.cols+m.rows,0,cover.crop@nrows)
+		cover.crop <- crop(cover,cover.extent)
+		cover.crop@ncols/cover.crop@nrows # final ratio
+
+		xmin(cover.crop) <- 0
+		xmax(cover.crop) <- 1300
+
+		ymin(cover.crop) <- 0
+		ymax(cover.crop) <- 1300
+
+
+	# Front cover with title: a square of 1300x1300 pixels
+
+		w.marge <- 1450-1300/2
+		h.marge <- 200
+
+		m.image <- 1300/2
+		cover.extent <- extent(0, m.image,0,1300)
+		cover.front <- crop(cover.crop,cover.extent)
+
+		xmin(cover.front) <- w.marge
+		xmax(cover.front) <- w.marge+m.image
+
+		ymin(cover.front) <- h.marge
+		ymax(cover.front) <- h.marge+1300
+ 
+		cover.front@ncols/cover.front@nrows # 0.5 final ratio
+
+		# Title
+
+		font.title <- "Annie Use Your Telescope"
+		#Google font: https://www.google.com/fonts/specimen/Annie+Use+Your+Telescope
+		title <- "MR. ROBOT"
+		subtitle <- "HACKED PRIVACY"
+
+
+
+	# Front cover with title: a square of 1300x1300 pixels
+
+		w.marge <- 1520
+		h.marge <- 200
+
+		m.image <- 1300/2
+		cover.extent <- extent(m.image,1300,0,1300)
+		cover.back <- crop(cover.crop,cover.extent)
+
+		xmin(cover.back) <- w.marge
+		xmax(cover.back) <- w.marge+m.image
+
+		ymin(cover.back) <- h.marge
+		ymax(cover.back) <- h.marge+1300
+ 
+		cover.back@ncols/cover.back@nrows # 0.5 final ratio
+
+
+	# Liste album MR.ROBOT
+
+		url <- "/Users/ChCariou/Desktop/R_MrRobot/liste.albums.csv"
+		# Liste here: http://lab.chcariou.fr/data/mr.robot/liste.albums.csv
+		# With the help of Reddit :
+		# https://www.reddit.com/r/MrRobot/comments/3k85ga/spotify_playlist_elliots_cd_collection/
+		# https://www.reddit.com/r/MrRobot/comments/3h6nt7/elliots_music_collection/
+
+		albums <- read.table(url, sep=";", header=TRUE)
+	
+		font.track <- "Permanent Marker"
+		# Google font: https://www.google.com/fonts/sp…
+		name.track <- paste(albums$id,". ", albums$serie,sep="")
+		name.track[1:9] <- paste("0",name.track[1:9], sep="")
+		name.track <- toupper(name.track)
+		
+		font.group <- "Annie Use Your Telescope"
+		name.group <- paste(albums$group," (",albums$year,")",sep="")
+		name.group <- toupper(name.group)
+
+
+# Datavisualisation
+
+
+	dev.off()
+	quartz(width=29.7/2,height=21/2,bg="#FEFEFE")
+	par(mar=c(0,0,0,0), oma=c(0,0,0,0))
+	plot(0,0,type="n",xlim=c(0,2970),ylim=c(0,2100), xaxs="i", yaxs="i", axes=FALSE, xlab=NA, ylab=NA, asp=1)
+
+	# Front cover
+	
+		rect(1520,200,1520+1300,200+1300,col="black", border="black", lwd=0.01)
+		plotRGB(cover.back, add=TRUE)
+
+		y.runif <- rev(seq(200,1500,25))
+		x.runif <- seq(1520,2815,25)
+		xy <- merge(x.runif,y.runif)
+		z.runif <- round(runif(dim(xy)[1],0,1),0)
+
+		a.runif <- y.runif
+		alpha.3 <- trunc(length(xy$x)/2)
+		pas <- trunc(length(xy$x)/8)
+		a.runif[1:alpha.3] <- 0.3+0.1
+		a.runif[(1+alpha.3):(1+alpha.3+pas)] <- 0.25+0.1
+		a.runif[(1+alpha.3+pas):(1+alpha.3+pas*2)] <- 0.2+0.1
+		a.runif[(1+alpha.3+pas*2):(1+alpha.3+pas*3)] <- 0.15+0.1
+		a.runif[(1+alpha.3+pas*3):dim(xy)[1]] <- 0.1+0.1
+
+		ok <- unique(round(runif(2800, 1, 2809),0))
+	
+		text(xy[ok,1],xy[ok,2],z.runif[ok], cex=0.5, family="Courier New", col=alpha("#FEFEFE", a.runif[ok]))
+
+		text(1485+1300-200,300+1300/2,title, cex=2, family=font.title, col="#FEFEFE")
+		text.background(1485+1300-200,200+1300/2,subtitle, cex=1.3, family=font.title, col="#000000", bg="#B8B8B8", lwd=10)
+
+
+
+	# Back cover
+
+		rect(150,200,150+1300,200+1300,col="black", border="black", lwd=0.01)
+		plotRGB(cover.front, add=TRUE)
+
+
+		y.runif <- rev(seq(200,1500,25))
+		x.runif <- seq(150,1450,25)
+		xy <- merge(x.runif,y.runif)
+		z.runif <- round(runif(dim(xy)[1],0,1),0)
+
+		a.runif <- y.runif
+		alpha.3 <- trunc(length(xy$x)/2)
+		a.runif[1:alpha.3] <- 0.3+0.1
+		a.runif[1405:(1405+351)] <- 0.25+0.1
+		a.runif[(1405+351):(1405+351*2)] <- 0.2+0.1
+		a.runif[(1405+351*2):(1405+351*3)] <- 0.15+0.1
+		a.runif[(1405+351*3):2809] <- 0.1+0.1
+
+		ok <- unique(round(runif(2800, 1, 2809),0))
+	
+		text(xy[ok,1],xy[ok,2],z.runif[ok], cex=0.5, family="Courier New", col=alpha("#FEFEFE", a.runif[ok]))
+
+
+		y.track <- (200+1300)-45*albums$id-25
+
+
+x.track <- 1335-c(75,130,160,190,215,230,250,265,270,270,265,255,250,240,230,300,370,430,470,510,seq(520,600,10))
+#points(x.track[1:27], y.track, pch=19, col="yellow")
+
+
+	text(x.track[1:27],y.track, name.group, cex=0.5, family= font.group, col="#FEFEFE", pos=2, offset=0)
+	w <- strwidth(name.group, cex=0.5, family= font.group)+10
+	text(x.track[1:27]-w, y.track, name.track, cex=0.75, family= font.track, col="#999999", pos=2, offset=0)
+
+
+
+
+#### Record in pdf > extract in jpg high quality
+# I have not yet found a really effective way to save my visualizations directly in jpg, png or tiff.
+
+
+# Result here: http://lab.chcariou.fr/data/mr.robot/f---society_raster.jpg
+
+
+########################################################################################################
+##############################################################################################################
+
+# Partie 2 : Rotate and compose page
+
+
+	url2 <- "/Users/ChCariou/Desktop/R_MrRobot/Image/f---society_raster.jpg"
+
+	image <- readImage(url2)
+	image.30 <- translate(rotate(image,-10),c(0,0))
+	display(image.30)
+	rotate <- image.30[151:4150,501:3328,]
+	
+	dev.off()
+	quartz(width=29.7/2,height=21/2,bg="#FEFEFE")
+	par(mar=c(0,0,0,0), oma=c(0,0,0,0))
+	plot(0,0,type="n",xlim=c(0,4000),ylim=c(0,2828), xaxs="i", yaxs="i", axes=FALSE, xlab=NA, ylab=NA,asp=1)
+
+	display(rotate, method="raster", all=TRUE)
+
+	polygon(c(0,2000,0),c(0,0,500), col="#FEFEFE", border=NA)
+	polygon(c(0,450,0),c(1000,2830,2830), col="#FEFEFE", border=NA)
+	polygon(c(400,4000,4000),c(2830,2100,2830), col="#FEFEFE", border=NA)
+	polygon(c(3700,4000,4000),c(0,0,1700), col="#FEFEFE", border=NA)
+
+
+	text(200, 250, "MR. ROBOT PLAYLIST", cex=2, family="MrRobot", col="#BF1A0E", pos=4, offset=0)
+	# Font on Reddit here: https://www.reddit.com/r/MrRobot/comments/3h3l31/mr_robot_font_to_download/
+
+
+	speech <- "Elliot hacks people and stores information onto CDs. The data is encrypted and embedded in music on CDs. Selected bands and albums are classics of tock history to not attract attention. But have you read the titles of these albums with great attention? Do you really think they are chosen randomly?"
+	# Read this: http://null-byte.wonderhowto.com/how-to/hacks-mr-robot-hide-data-audio-files-0164136/
+
+	w <- strwidth("MR. ROBOT PLAYLIST", cex=2, family="MrRobot")
+	textR(200,400,speech, family="Avenir Next Italic", cex=0.70, col="black", w=w, posR=1, justR=1)
+
+
+
+	me <- "RSTUFF 16.03 - CHRISTOPHE CARIOU"
+	font.me <- "Avenir Next Regular"
+	text(3800,2578,me, family=font.me, cex=0.75,col="black", pos=2,offset=0)
+
+
+
